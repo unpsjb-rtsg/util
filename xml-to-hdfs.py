@@ -131,23 +131,20 @@ def get_args():
     return parser.parse_args()
 
 
-def hdf_store(args, df_dict):
-    with pd.HDFStore(args.save, complevel=9, complib='blosc') as store:
-        for key, df_item in df_dict.items():
-            if key in store:
-                if args.reuse_key is False:
-                    sys.stderr.write("{0} -- key already exists (use --reuse-key).\n".format(args.save_key))
-                    exit(1)
-                else:
-                    store.remove(args.save_key)
+def hdf_store(args, key, df, metadata):
+    with pd.HDFStore(args.save, complevel=9, complib='blosc') as store:        
+        if key in store:
+            if args.reuse_key is False:
+                sys.stderr.write("{0} -- key already exists (use --reuse-key).\n".format(args.save_key))
+                exit(1)
+            else:
+                store.remove(args.save_key)
 
-            df, metadata = df_item
+        # save the results into the store
+        store.put(key, df, format='table')
 
-            # save the results into the store
-            store.put(key, df, format='table')
-
-            # add metadata
-            store.get_storer(key).attrs.metadata = metadata
+        # add metadata
+        store.get_storer(key).attrs.metadata = metadata
 
 
 def main():
@@ -162,8 +159,6 @@ def main():
         exit(1)
 
     # key hierarchy: dist_type/range/task_cnt/uf -- example: r1/p25-1000/n10/u70
-
-    df_dict = {}
 
     for file in args.files:
         if not os.path.isfile(file):
@@ -185,19 +180,16 @@ def main():
                 tmp_list.append(task)
 
         # lower case all column names
-        tmp_df = pd.DataFrame.from_dict(tmp_list)
-        tmp_df.columns = map(str.lower, tmp_df.columns)
-        tmp_df.rename(columns={'nro': 'task_id'}, inplace=True)
+        df = pd.DataFrame.from_dict(tmp_list)
+        df.columns = map(str.lower, df.columns)
+        df.rename(columns={'nro': 'task_id'}, inplace=True)
         
         # key
         key = "/{0}/{1}/n{2}/u{3}".format(args.dist_type, args.range, xml_rts_size, xml_uf)
         
-        # add DataFrame into list
-        df_dict[key] = (tmp_df, metadata)
-
-    # save dataframes into hdfs store
-    if args.save:
-        hdf_store(args, df_dict)    
+        # save dataframes into hdfs store
+        if args.save:
+            hdf_store(args, key, df, metadata)
     
 
 if __name__ == '__main__':
