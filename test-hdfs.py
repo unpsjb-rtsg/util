@@ -181,7 +181,12 @@ def main():
                     print("{0}:\n{1}".format(args.key, df[df["rts_id"] == args.print_rts]))
                 if args.get_info:
                     metadata = store.get_storer(args.key).attrs.metadata
-                    print("{0}:\n{1}\n".format(args.key, metadata))
+                    if metadata:
+                        print("{0} metadata:".format(args.key))
+                        for k, v in metadata.items():
+                            print("{0}: {1}".format(k, v))
+                    else:
+                        print("{0}: No metadata available.".format(args.key))
     
 
 if __name__ == '__main__':
