@@ -166,7 +166,7 @@ def main():
             sys.exit(1)
 
         if args.verbose:
-            sys.stderr.write("Exporting file : {0}\n".format(file))
+            sys.stderr.write("Exporting file: {0}\n".format(file))
 
         # evaluate the methods with the rts in file        
         rts_count, xml_set_size, xml_rts_size, xml_uf, rts_list = get_rts_from_xml(file, args.start, args.count)
