@@ -113,15 +113,42 @@ def rta3(rts):
     return [schedulable, wcrt]
 
 
+def plot_cvst(df, use_qt=False):
+    if use_qt:
+        import pyqtgraph as pg
+        from pyqtgraph.Qt import QtGui, QtCore
+
+        app = QtGui.QApplication([])
+        win = pg.GraphicsWindow()
+        win.resize(500,500)
+        win.setWindowTitle('C vs T')
+
+        # Enable antialiasing for prettier plots
+        pg.setConfigOptions(antialias=True)
+
+        p = win.addPlot(title=file)
+        p.plot(df["c"], df["t"], pen=None, symbol='o', symbolPen=None, symbolSize=10, symbolBrush=(100, 100, 255, 50))
+        p.setLabel('left', "T")
+        p.setLabel('bottom', "C")
+        p.setLogMode(x=False, y=False)
+
+        if sys.flags.interactive != 1 or not hasattr(QtCore, 'PYQT_VERSION'):
+            pg.QtGui.QApplication.exec_()
+    else:
+        df.plot.scatter(x='c', y='t')
+        plt.show(block=True)
+
+
 def get_args():
     """ Command line arguments """
-    parser = ArgumentParser(description="Inspect a hdfs store file(s) with pandas DataFrames containing rts.")
+    parser = ArgumentParser(description="Inspect sets of rts contained in hdfs store file(s) as pandas DataFrames.")
     parser.add_argument("files", help="XML file with RTS", nargs="+", type=str)
     parser.add_argument("--key", help="DataFrame key in store", default=None, type=str)
     parser.add_argument("--list", help="list keys in store", default=False, action="store_true")
     parser.add_argument("--get-rts-count", help="count number of rts in key", default=False, action="store_true")
     parser.add_argument("--print-rts", help="print rts in df specified by key", default=None, type=int)
     parser.add_argument("--get-info", help="retrive metadata for the DataFrame specified by key", default=False, action="store_true")
+    parser.add_argument("--plot", help="Plot DataFrame", default=None, choices=["u"])
     return parser.parse_args()
 
 
@@ -177,8 +204,10 @@ def main():
             if df is not None:
                 if args.get_rts_count:
                     print("{0}: {1} rts.".format(args.key, len(df.groupby(["rts_id"]))))
+                
                 if args.print_rts:
                     print("{0}:\n{1}".format(args.key, df[df["rts_id"] == args.print_rts]))
+                
                 if args.get_info:
                     metadata = store.get_storer(args.key).attrs.metadata
                     if metadata:
@@ -187,6 +216,10 @@ def main():
                             print("{0}: {1}".format(k, v))
                     else:
                         print("{0}: No metadata available.".format(args.key))
+                
+                if args.plot == "u":
+                    plot_cvst(df)
+                    
     
 
 if __name__ == '__main__':
