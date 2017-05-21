@@ -1,11 +1,11 @@
+#!/usr/bin/env python3
+
 import os
 import math
 import sys
 import pandas as pd
 import numpy as np
-from tabulate import tabulate
 from argparse import ArgumentParser
-import matplotlib.pyplot as plt
 
 
 def get_rts_from_xml(xml_file, start, count):
